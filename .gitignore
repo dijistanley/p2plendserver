@@ -1,0 +1,19 @@
+# dependencies
+/app/packages
+/app/p2plend/bin
+/app/p2plend/obj
+
+# IDEs and editors
+/.idea
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage/*
+/libpeerconnection.log
+npm-debug.log
+testem.log
+/typings
+
+#System Files
+.DS_Store
