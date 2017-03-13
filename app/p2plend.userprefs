@@ -1,0 +1,15 @@
+﻿<Properties StartupConfiguration="{877E4EAC-0DEB-4E87-9462-6DF8615A0619}|">
+  <MonoDevelop.Ide.Workbench ActiveDocument="p2plend/App_Start/Startup.OAuth.cs">
+    <Files>
+      <File FileName="p2plend/App_Start/Startup.OAuth.cs" Line="4" Column="15" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.P2PLend PreferredExecutionTarget="MonoDevelop.Default" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.ItemProperties.p2plend PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>
