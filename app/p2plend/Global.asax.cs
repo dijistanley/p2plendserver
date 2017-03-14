@@ -6,6 +6,7 @@ using P2PLend.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using P2PLend.App_Start;
 
 namespace p2plend
 {
@@ -15,7 +16,7 @@ namespace p2plend
 		{
 			//AreaRegistration.RegisterAllAreas();
 			GlobalConfiguration.Configure(WebApiConfig.Register);
-
+            //GlobalConfiguration.Configure(FilterConfig.Configure);
 			// initialise database
 			InitializeDB();
 

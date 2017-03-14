@@ -12,7 +12,7 @@ using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.OAuth;
 
 
-namespace P2PLend
+namespace P2PLend.Identity
 {
 	public class CustomOAuthProvider: OAuthAuthorizationServerProvider
 	{
@@ -21,7 +21,7 @@ namespace P2PLend
 			context.OwinContext.Response.Headers.Add("Access-Control-Allow-Origin", new[] { "*" });
 
 			var user = context.OwinContext.Get<P2PDBContext>().Users.FirstOrDefault(u => u.UserName == context.UserName);
-			if (!context.OwinContext.Get<P2PUsermanager>().CheckPassword(user, context.Password))
+			if (!context.OwinContext.Get<P2PUserManager>().CheckPassword(user, context.Password))
 			{
 				context.SetError("invalid_grant", "The user name or password is incorrect");
 				context.Rejected();
@@ -46,7 +46,7 @@ namespace P2PLend
 			identity.AddClaim(new Claim(ClaimTypes.Name, context.UserName));
 			identity.AddClaim(new Claim("sub", context.UserName));
 
-			var userRoles = context.OwinContext.Get<BookUserManager>().GetRoles(user.Id);
+			var userRoles = context.OwinContext.Get<P2PUserManager>().GetRoles(user.Id);
 			foreach (var role in userRoles)
 			{
 				identity.AddClaim(new Claim(ClaimTypes.Role, role));

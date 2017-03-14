@@ -1,19 +1,17 @@
-﻿using System;
-using System.Configuration;
-using P2PLend.Core;
-using P2PLend.Identity;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
-using Microsoft.Owin;
+﻿using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.DataHandler.Encoder;
 using Microsoft.Owin.Security.Jwt;
 using Microsoft.Owin.Security.OAuth;
 using Owin;
+using P2PLend.Core;
+using P2PLend.Identity;
+using System;
+using System.Configuration;
 
 namespace P2PLend
 {
-	public partial class Startup
+    public partial class Startup
 	{
 		public void ConfigureOAuth(IAppBuilder app)
 		{
@@ -21,7 +19,7 @@ namespace P2PLend
 			var secret = TextEncodings.Base64Url.Decode(ConfigurationManager.AppSettings["secret"]);
 
 			app.CreatePerOwinContext(() => new P2PDBContext());
-			app.CreatePerOwinContext(() => new P2PUsermanager());
+			app.CreatePerOwinContext(() => new P2PUserManager());
 
 			app.UseJwtBearerAuthentication(new JwtBearerAuthenticationOptions
 			{

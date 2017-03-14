@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Microsoft.Owin.Security;
+using Microsoft.Owin.Security.DataHandler.Encoder;
+using System;
 using System.Configuration;
 using System.IdentityModel.Tokens;
-using Microsoft.Owin.Security;
-using Microsoft.Owin.Security.DataHandler.Encoder;
 using Thinktecture.IdentityModel.Tokens;
 
 namespace P2PLend
 {
-	public class CustomJwtFormat : ISecureDataFormat<AuthenticationTicket>
+    public class CustomJwtFormat : ISecureDataFormat<AuthenticationTicket>
 	{
 		private static readonly byte[] _secret = TextEncodings.Base64Url.Decode(ConfigurationManager.AppSettings["secret"]);
 		private readonly string _issuer;
