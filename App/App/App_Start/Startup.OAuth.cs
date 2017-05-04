@@ -8,51 +8,68 @@ using App.Identity;
 using System;
 using System.Configuration;
 using App.Providers;
+using DataAccess.Repositories;
 
 namespace App
 {
     public partial class Startup
 	{
-		public void ConfigureOAuth(IAppBuilder app)
-		{
-			var issuer = ConfigurationManager.AppSettings["issuer"];
-			var secret = TextEncodings.Base64Url.Decode(ConfigurationManager.AppSettings["secret"]);
+        public static OAuthAuthorizationServerOptions OAuthOptions { get; private set; }
 
+        public void ConfigureOAuth(IAppBuilder app)
+		{
+            CreateRolesAndAdminUsers();
+
+            var issuer = ConfigurationManager.AppSettings["issuer"];
+			var secret = TextEncodings.Base64Url.Decode(ConfigurationManager.AppSettings["secret"]);
+            
 			app.CreatePerOwinContext(() => new DataAccess.Core.DatabaseContext());
 			app.CreatePerOwinContext(() => new DataAccess.Core.ApplicationUserManager());
-
-            //// Token Generation
-            app.UseJwtBearerAuthentication(new JwtBearerAuthenticationOptions
-			{
-				AuthenticationMode = AuthenticationMode.Active,
-				AllowedAudiences = new[] { "Any" },
-				IssuerSecurityTokenProviders = new IIssuerSecurityTokenProvider[]
-				{
-					new SymmetricKeyIssuerSecurityTokenProvider(issuer, secret)
-				}
-			});
-		
-			app.UseOAuthAuthorizationServer(new OAuthAuthorizationServerOptions
-			{
-				AllowInsecureHttp = true,
-				TokenEndpointPath = new PathString("/oauth2/token"),
-				AccessTokenExpireTimeSpan = TimeSpan.FromMinutes(30),
+            
+			OAuthOptions = new OAuthAuthorizationServerOptions
+            {
+#if DEBUG
+                AllowInsecureHttp = true,
+#endif
+                TokenEndpointPath = new PathString("/oauth2/token"),
+                //AuthorizeEndpointPath = new PathString("/account/ExternalLogin"),
+                AccessTokenExpireTimeSpan = TimeSpan.FromHours(5),
 				Provider = new CustomOAuthProvider(),
 				AccessTokenFormat = new CustomJwtFormat(issuer),
-                RefreshTokenProvider = new CustomRefreshTokenProvider()
-            });
+                RefreshTokenProvider = new CustomRefreshTokenProvider(),
+                AuthenticationType = OAuthDefaults.AuthenticationType
+            };
+            
+            app.UseOAuthAuthorizationServer(OAuthOptions);
+            app.UseOAuthBearerAuthentication(
+                    new OAuthBearerAuthenticationOptions() {
+                        AccessTokenFormat = new CustomJwtFormat(issuer)
+                    });
+
+
+            //// Token Generation
+            //app.UseJwtBearerAuthentication(new JwtBearerAuthenticationOptions
+            //{
+            //    AuthenticationMode = AuthenticationMode.Active,
+            //    AllowedAudiences = new[] { "Any" },
+            //    IssuerSecurityTokenProviders = new IIssuerSecurityTokenProvider[]
+            //    {
+            //        new SymmetricKeyIssuerSecurityTokenProvider(issuer, secret)
+            //    },
+                
+            //});
 
             //use a cookie to temporarily store information about a user logging in with a third party login provider
             //app.UseExternalSignInCookie(Microsoft.AspNet.Identity.DefaultAuthenticationTypes.ExternalCookie);
-            
-            //Configure Google External Login
-            //googleAuthOptions = new GoogleOAuth2AuthenticationOptions()
+
+            //configure google external login
+            //googleauthoptions = new googleoauth2authenticationoptions()
             //{
-            //    ClientId = ConfigManager.Instance.GoogleClientID,
-            //    ClientSecret = ConfigManager.Instance.GoogleClientSecret,
-            //    Provider = new GoogleAuthProvider()
+            //    clientid = configmanager.instance.googleclientid,
+            //    clientsecret = configmanager.instance.googleclientsecret,
+            //    provider = new googleauthprovider()
             //};
-            //app.UseGoogleAuthentication(googleAuthOptions);
+            //app.usegoogleauthentication(googleauthoptions);
 
             //Configure Facebook External Login
             //facebookAuthOptions = new FacebookAuthenticationOptions()
@@ -62,6 +79,15 @@ namespace App
             //    Provider = new FacebookAuthProvider()
             //};
             //app.UseFacebookAuthentication(facebookAuthOptions);
+        }
+
+        public void CreateRolesAndAdminUsers()
+        {
+            using (AccountRepository accRepo = new AccountRepository())
+            {
+                accRepo.CreateDefaultRolesAndUser();
+            }
+            
         }
     }
 }

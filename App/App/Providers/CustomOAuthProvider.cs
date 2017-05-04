@@ -5,8 +5,12 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
+using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OAuth;
 using Model.Models;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -19,15 +23,7 @@ namespace App.Identity
 		public override async Task GrantResourceOwnerCredentials(OAuthGrantResourceOwnerCredentialsContext context)
 		{
 			context.OwinContext.Response.Headers.Add("Access-Control-Allow-Origin", new[] { "*" });
-
-			//ApplicationUser user = context.OwinContext.Get<DatabaseContext>().Users.FirstOrDefault(u => u.UserName == context.UserName);
-			//if (!context.OwinContext.Get<ApplicationUserManager>().CheckPassword(user, context.Password))
-			//{
-			//	context.SetError("invalid_grant", "The user name or password is incorrect");
-			//	context.Rejected();
-   //             return;
-			//}
-
+            
             ApplicationUser user;
             using (AccountRepository _repo = new AccountRepository())
             {
@@ -36,15 +32,19 @@ namespace App.Identity
 
             if (user == null)
             {
-                context.Validated();
                 context.SetError("invalid_grant", "The user name or password is incorrect.");
-                //context.Rejected();
                 return;
             }
+            
+            AuthenticationProperties properties = CreateProperties(user.UserName);
+            ClaimsIdentity oAuthIdentity = GetOAuthClaimsIdentity(context, user);
+            ClaimsIdentity cookiesIdentity = GetCookiesClaimsIdentity(context, user);
 
-            ClaimsIdentity claimsIdentity = SetClaimsIdentity(context, user);
-            AuthenticationTicket ticket = new AuthenticationTicket(claimsIdentity, new AuthenticationProperties());
+            AuthenticationTicket ticket = new AuthenticationTicket(oAuthIdentity, properties);
 			context.Validated(ticket);
+            //context.Request.Context.Authentication.SignIn(cookiesIdentity);
+
+
 		}
 
 		public override Task ValidateClientAuthentication(OAuthValidateClientAuthenticationContext context)
@@ -108,19 +108,43 @@ namespace App.Identity
             return Task.FromResult<object>(null);
         }
 
-		private static ClaimsIdentity SetClaimsIdentity(OAuthGrantResourceOwnerCredentialsContext context, IdentityUser user)
+		private static ClaimsIdentity GetOAuthClaimsIdentity(OAuthGrantResourceOwnerCredentialsContext context, IdentityUser user)
 		{
-			var identity = new ClaimsIdentity("JWT");
-			identity.AddClaim(new Claim(ClaimTypes.Name, context.UserName));
-			identity.AddClaim(new Claim("sub", context.UserName));
-
-			var userRoles = context.OwinContext.Get<DataAccess.Core.ApplicationUserManager>().GetRoles(user.Id);
-			foreach (var role in userRoles)
-			{
-				identity.AddClaim(new Claim(ClaimTypes.Role, role));
-			}
+            // "JWT"
+            var identity = new ClaimsIdentity(GetClaims(context, user), OAuthDefaults.AuthenticationType);
 
 			return identity;
 		}
-	}
+
+        private static ClaimsIdentity GetCookiesClaimsIdentity(OAuthGrantResourceOwnerCredentialsContext context, IdentityUser user)
+        {
+            // "Cookies"
+            var identity = new ClaimsIdentity(GetClaims(context, user), CookieAuthenticationDefaults.AuthenticationType);
+            return identity;
+        }
+
+        private static IEnumerable<Claim> GetClaims(OAuthGrantResourceOwnerCredentialsContext context, IdentityUser user)
+        {
+            List<Claim> claims = new List<Claim>();
+            yield return new Claim(ClaimTypes.Name, context.UserName);
+            yield return new Claim(JwtRegisteredClaimNames.Sub, context.UserName);
+            yield return new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString());
+            //yield return new Claim(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64);
+
+            var userRoles = context.OwinContext.Get<DataAccess.Core.ApplicationUserManager>().GetRoles(user.Id);
+            foreach (var role in userRoles)
+            {
+                yield return new Claim(ClaimTypes.Role, role);
+            }
+        }
+
+        public static AuthenticationProperties CreateProperties(string userName)
+        {
+            IDictionary<string, string> data = new Dictionary<string, string>
+            {
+                { "userName", userName }
+            };
+            return new AuthenticationProperties(data);
+        }
+    }
 }

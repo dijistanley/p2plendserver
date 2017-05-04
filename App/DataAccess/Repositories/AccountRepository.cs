@@ -1,10 +1,13 @@
 ﻿using DataAccess.Core;
+using DataAccess.enums;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
 using Model.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web.Security;
 
 namespace DataAccess.Repositories
 {
@@ -27,7 +30,13 @@ namespace DataAccess.Repositories
                 Email = user.Email
             };
 
-            var result = await userManager.CreateAsync(iUser, user.Password);
+            IdentityResult result = await userManager.CreateAsync(iUser, user.Password);
+
+            if(result.Succeeded)
+            {
+                // add user role
+                await userManager.AddToRoleAsync(iUser.Id, "User");
+            }
 
             return result;
         }
@@ -37,7 +46,7 @@ namespace DataAccess.Repositories
             ApplicationUser user = await userManager.FindAsync(username, password);
             return user;
         }
-
+        
         public Client FindClient(string clientId)
         {
             var client = context.Clients.Find(clientId);
@@ -97,19 +106,51 @@ namespace DataAccess.Repositories
 
             return user;
         }
-
-        //public async Task<IdentityResult> CreateAsync(ApplicationUser user)
-        //{
-        //    var result = await userManager.CreateAsync(user);
-
-        //    return result;
-        //}
-
+        
         public async Task<IdentityResult> AddLoginAsync(string userId, UserLoginInfo login)
         {
             var result = await userManager.AddLoginAsync(userId, login);
 
             return result;
+        }
+
+        public void CreateDefaultRolesAndUser()
+        {
+            var roleManager = new RoleManager<IdentityRole>(new RoleStore<IdentityRole>(context));
+            var UserManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(context));
+            
+            // In Startup iam creating first Admin Role and creating a default Admin User  
+            if (!roleManager.RoleExists(UserRoles.Admin.ToString()))
+            {
+
+                // first we create Admin rool 
+                var role = new Microsoft.AspNet.Identity.EntityFramework.IdentityRole();
+                role.Name = UserRoles.Admin.ToString();
+                roleManager.CreateAsync(role);
+                
+                //Here we create a Admin super user who will maintain the website                 
+                var user = new ApplicationUser();
+                user.UserName = "voiddigits";
+                user.Email = "dijistanley@voiddigits.com";
+                string userPWD = "123456";
+
+                var chkUser = UserManager.Create(user, userPWD);
+
+                //Add default User to Role Admin 
+                if (chkUser.Succeeded)
+                {
+                    var result1 = UserManager.AddToRole(user.Id, UserRoles.Admin.ToString());
+
+                }
+            }
+
+            // creating Creating Manager role  
+            if (!roleManager.RoleExists(UserRoles.User.ToString()))
+            {
+                var role = new Microsoft.AspNet.Identity.EntityFramework.IdentityRole();
+                role.Name = UserRoles.User.ToString();
+                roleManager.Create(role);
+            }
         }
 
         public void Dispose()

@@ -10,7 +10,6 @@ namespace DataAccess.Core
 {
     public class DatabaseInitializer: MigrateDatabaseToLatestVersion<DatabaseContext, DBConfig>
     {
-
         //public override void InitializeDatabase(DatabaseContext context)
         //{
         //    if (!context.Database.Exists())

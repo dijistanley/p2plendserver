@@ -1,4 +1,5 @@
-﻿using System.Web.Http;
+﻿using Microsoft.Owin.Security.OAuth;
+using System.Web.Http;
 using System.Web.Http.Cors;
 
 namespace App.App_Start
@@ -8,10 +9,9 @@ namespace App.App_Start
         public static void Register(HttpConfiguration config)
         {
             // Web API configuration and services
-
-            ConfigureCORS(config);
-
+            ConfigureOAuthTokenHandler(config);
             ConfigureRoutes(config);
+            ConfigureCORS(config);
         }
 
         static void ConfigureRoutes(HttpConfiguration config)
@@ -31,6 +31,12 @@ namespace App.App_Start
             var cors = new EnableCorsAttribute("*", "*", "*");
             config.EnableCors(cors);
             config.MessageHandlers.Add(new PreflightRequestsHandler());
+        }
+
+        static void ConfigureOAuthTokenHandler(HttpConfiguration config)
+        {
+            config.SuppressDefaultHostAuthentication();
+            config.Filters.Add(new HostAuthenticationAttribute(OAuthDefaults.AuthenticationType));
         }
     }
 }

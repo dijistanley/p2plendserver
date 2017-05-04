@@ -60,6 +60,7 @@
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\RefreshToken.cs" />
     <Compile Include="Models\RegisterUser.cs" />
+    <Compile Include="Models\UserInformation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
