@@ -9,9 +9,9 @@ namespace App.App_Start
         public static void Register(HttpConfiguration config)
         {
             // Web API configuration and services
+            //ConfigureCORS(config);
             ConfigureOAuthTokenHandler(config);
             ConfigureRoutes(config);
-            ConfigureCORS(config);
         }
 
         static void ConfigureRoutes(HttpConfiguration config)
@@ -28,7 +28,7 @@ namespace App.App_Start
 
         static void ConfigureCORS(HttpConfiguration config)
         {
-            var cors = new EnableCorsAttribute("*", "*", "*");
+            var cors = new EnableCorsAttribute("http://localhost", "*", "*");
             config.EnableCors(cors);
             config.MessageHandlers.Add(new PreflightRequestsHandler());
         }

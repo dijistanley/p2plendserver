@@ -14,6 +14,7 @@ namespace App
     {
         public void Configuration(IAppBuilder app)
         {
+            app.UseCors(CorsOptions.AllowAll);
             GlobalConfiguration.Configure(WebApiConfig.Register);
             // uncomment the line below to require authorization for all resources except oauth2/token
             GlobalConfiguration.Configure(FilterConfig.Configure);
