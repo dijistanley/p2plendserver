@@ -8,9 +8,11 @@ namespace Model.Models
         [Display(Name = "User Name")]
         public string UserName { get; set; }
 
-        //[Required]
-        //public string OrganizationId { get; set; }
-
+        [Display(Name = "Firstname")]
+        public string FirstName { get; set; }
+        [Display(Name = "Lastname")]
+        public string LastName { get; set; }
+        
         [Required]
         [Display(Name = "Email")]
         [DataType(DataType.EmailAddress)]

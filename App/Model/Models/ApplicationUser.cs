@@ -3,7 +3,7 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace DataAccess.Core
+namespace Model.Models
 {
     public class ApplicationUser : IdentityUser
     {

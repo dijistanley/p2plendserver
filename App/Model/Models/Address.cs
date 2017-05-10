@@ -10,8 +10,15 @@ namespace Model.Models
 {
     public class Address
     {
+        public Address()
+        {
+
+        }
+
         [Key]
-        public string Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
         public AddressUse Use { get; set; }
         public AddressType Type { get; set; }
         // text representation of this address

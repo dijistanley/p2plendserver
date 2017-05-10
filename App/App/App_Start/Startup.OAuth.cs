@@ -28,9 +28,7 @@ namespace App
             
 			OAuthOptions = new OAuthAuthorizationServerOptions
             {
-#if DEBUG
                 AllowInsecureHttp = true,
-#endif
                 TokenEndpointPath = new PathString("/oauth2/token"),
                 //AuthorizeEndpointPath = new PathString("/account/ExternalLogin"),
                 AccessTokenExpireTimeSpan = TimeSpan.FromHours(5),

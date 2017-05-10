@@ -25,7 +25,7 @@ namespace DataAccess.Core
         public DbSet<Client> Clients { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Address> Address { get; set; }
-        public DbSet<UserInformation> UserInformation { get; set; }
+        public DbSet<UserProfile> UserProfile { get; set; }
         #endregion
 
     }
