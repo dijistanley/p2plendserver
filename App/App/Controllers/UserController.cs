@@ -106,6 +106,7 @@ namespace App.Controllers
                     }
 
                     user.PhoneNumber = request.PhoneNumber;
+                    user.PhoneNumberConfirmed = false;
                     await ar.UpdateUserAsync(user);
                 }
             }
