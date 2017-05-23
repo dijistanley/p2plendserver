@@ -1,18 +1,16 @@
 ﻿using App.ResonseModels;
+using App.ResonseModels.RequestModels;
 using DataAccess.Repositories;
-using Microsoft.Owin.Security.OAuth;
+using Microsoft.AspNet.Identity;
 using Model.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
 
 namespace App.Controllers
 {
     [RoutePrefix("api/User")]
-    public class UserController: ApiController
+    public class UserController: BaseController
     {
         [AllowAnonymous]
         [HttpGet]
@@ -25,8 +23,7 @@ namespace App.Controllers
             
             return Json("Uberlend API, OK");
         }
-
-        // GET api/values
+        
         [HttpGet]
         public async Task<IHttpActionResult> Info()
         {
@@ -79,66 +76,145 @@ namespace App.Controllers
         }
 
         [HttpPost]
-        public async Task<IHttpActionResult> Post(UserProfileRequest request)
+        public async Task<IHttpActionResult> UpdateProfileNames(UpdateUserProfileRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (!User.Identity.IsAuthenticated)
-            {
-                return BadRequest("Unauthorized");
-            }
+            var user = await GetUser();
 
-            var userName = this.RequestContext.Principal.Identity.Name;
-            ApplicationUser user;
-            using (AccountRepository ar = new AccountRepository())
-            {
-                user = await ar.FindByNameAsync(userName);
-                if (!string.IsNullOrEmpty(request.PhoneNumber))
-                {
-                    // update phone
-
-                    if (user == null)
-                    {
-                        return BadRequest();
-                    }
-
-                    user.PhoneNumber = request.PhoneNumber;
-                    user.PhoneNumberConfirmed = false;
-                    await ar.UpdateUserAsync(user);
-                }
-            }
-
+            if (user == null) return BadRequest(StringResource.UnauthorizedMessage);
+            
             using (UserProfileRepository uprepo = new UserProfileRepository())
             {
-                UserProfile up = await uprepo.FindByUserId(user.Id);
+                
+                if (await uprepo.UpdateName(user.Id, request.Firstname, request.Lastname))
+                    return Ok(string.Format(StringResource.SuccessUpdateMessage, "User names"));
 
-                if (up != null)
+            }
+
+            return BadRequest(String.Format(StringResource.ErorUpdateMessage, "User profile"));
+            
+        }
+
+        [HttpPost]
+        public async Task<IHttpActionResult> UpdateEmail(UpdateEmailRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            
+            var user = await GetUser();
+
+            if (user == null) return BadRequest(StringResource.UnauthorizedMessage);
+
+            if (request != null)
+            {
+                using (AccountRepository ar = new AccountRepository())
                 {
-                    up.FirstName = string.IsNullOrEmpty( request.Firstname ) ? up.FirstName : request.Firstname;
-                    up.LastName = string.IsNullOrEmpty(request.Lastname) ? up.LastName : request.Lastname;
-                    
-                    if(request.Address != null)
+                    if(await ar.FindUser(user.Email, request.Password)!= null)
                     {
-                        up.Address.Text = string.IsNullOrEmpty(request.Address.Text) ? up.Address.Text : request.Address.Text;
-                        up.Address.Line = string.IsNullOrEmpty(request.Address.Line) ? up.Address.Line : request.Address.Line;
-                        up.Address.District = string.IsNullOrEmpty(request.Address.District) ? up.Address.District : request.Address.District;
-                        up.Address.City = string.IsNullOrEmpty(request.Address.City) ? up.Address.City : request.Address.City;
-                        up.Address.State = string.IsNullOrEmpty(request.Address.State) ? up.Address.State : request.Address.State;
-                        up.Address.Period = string.IsNullOrEmpty(request.Address.Period) ? up.Address.Period : request.Address.Period;
-                        up.Address.PostalCode = string.IsNullOrEmpty(request.Address.PostalCode) ? up.Address.PostalCode : request.Address.PostalCode;
-                        up.Address.Country = string.IsNullOrEmpty(request.Address.Country) ? up.Address.Country : request.Address.Country;
+                        if((await ar.ChangeUserEmail(user.Id, request.Email)).Succeeded)
+                        {
+                            return Ok();
+                        }
                     }
-
-                    if (await uprepo.Update(up))
-                        return Ok("User Profile Updated");
                 }
             }
 
-            return BadRequest("Could not update profile");
+            return BadRequest("Could not update email");
+        }
+
+        [HttpPost]
+        public async Task<IHttpActionResult> UpdatePassword(UpdatePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             
+            var user = await GetUser();
+
+            if(user == null) return BadRequest(StringResource.UnauthorizedMessage);
+
+            if (request != null)
+            {
+                using (AccountRepository ar = new AccountRepository())
+                {
+                    IdentityResult ir = await ar.ChangeUserPassword(user.Id, request.CurrentPassword, request.NewPassword);
+                    if(ir.Succeeded)
+                    {
+                        return Ok(String.Format(StringResource.SuccessUpdateMessage, "Password"));
+                    }
+                }
+            }
+
+            return BadRequest(string.Format(StringResource.ErorUpdateMessage, "user password"));
+        }
+
+        [HttpPost]
+        public async Task<IHttpActionResult> UpdatePhoneNumber(UpdatePhoneRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await GetUser();
+
+            if (user == null) return BadRequest(StringResource.UnauthorizedMessage);
+
+            if (request != null)
+            {
+                using (AccountRepository ar = new AccountRepository())
+                {
+                    IdentityResult ir = await ar.ChangeUserPhonenumber(user.Id, request.NewPhoneNumber);
+                    if (ir.Succeeded)
+                    {
+                        return Ok(String.Format(StringResource.SuccessUpdateMessage, "Phone number"));
+                    }
+                }
+            }
+
+            return BadRequest(string.Format(StringResource.ErorUpdateMessage , "Phone number"));
+        }
+
+        [HttpPost]
+        public async Task<IHttpActionResult> UpdateAddress(UpdateAddressRequest request)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await GetUser();
+
+            if (user == null) return BadRequest(StringResource.UnauthorizedMessage);
+
+            if (request != null)
+            {
+                using (UserProfileRepository uprepo = new UserProfileRepository())
+                {
+
+                    Address address = new Address();
+
+                    address.Line = request.Line;
+                    address.District = request.District;
+                    address.City = request.City;
+                    address.State = request.State;
+                    address.PostalCode = request.PostalCode;
+                    address.Country = request.Country;
+
+                    if (await uprepo.UpdateAddress(user.Id, address))
+                        return Ok(string.Format(StringResource.SuccessUpdateMessage, "User Address"));
+                }
+            }
+            return BadRequest(string.Format(StringResource.ErorUpdateMessage, "Address"));
+
         }
     }
 }

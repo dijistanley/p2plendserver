@@ -48,20 +48,20 @@ namespace DataAccess.Repositories
             return data.FirstOrDefault();
         }
 
-        public override async Task<bool> Update(UserProfile t)
+        public async Task<bool> UpdateAddress(string userID, Address newAddress)
         {
-            UserProfile up = await Find(t.Id.ToString());
-                
-            if(up == null && !string.IsNullOrEmpty(t.UserId))
-            {
-                up = await FindByUserId(t.UserId);
-            }
+            UserProfile up = (await DBContext.UserProfile.Where(x => x.UserId == userID).ToListAsync()).FirstOrDefault();
 
-            if(up != null)
+            if (up != null)
             {
-                up.FirstName = t.FirstName;
-                up.LastName = t.LastName;
-                up.Address = t.Address;
+                up.Address.State = newAddress.State;
+                up.Address.PostalCode = newAddress.PostalCode;
+                up.Address.Line = newAddress.Line;
+                up.Address.District = newAddress.District;
+                up.Address.City = newAddress.City;
+                up.Address.Country = newAddress.Country;
+
+                up.Address.Text = string.Format("{0}, {1}, {2}, {3}. {4}. {5}", up.Address.Line, up.Address.District, up.Address.City, up.Address.State, up.Address.Country, up.Address.PostalCode);
 
                 try
                 {
@@ -74,6 +74,38 @@ namespace DataAccess.Repositories
                 }
             }
 
+            return false;
+
+        }
+
+        public async Task<bool> UpdateName(string userID, string firstname = null, string lastname = null)
+        {
+            UserProfile up = (await DBContext.UserProfile.Where(x => x.UserId == userID).ToListAsync()).FirstOrDefault();
+
+            if(up != null)
+            {
+                if(!string.IsNullOrEmpty(firstname))
+                    up.FirstName = firstname;
+
+                if (!string.IsNullOrEmpty(lastname))
+                    up.LastName = lastname;
+
+                try
+                {
+                    await DBContext.SaveChangesAsync();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        public override async Task<bool> Update(UserProfile t)
+        {
             return false;
         }
 

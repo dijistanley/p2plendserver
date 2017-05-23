@@ -216,6 +216,21 @@ namespace DataAccess.Repositories
 
         }
 
+        public async Task<IdentityResult> ChangeUserPassword(string userID, string currentPassword, string newPassword)
+        {
+            return await userManager.ChangePasswordAsync(userID, currentPassword, newPassword);
+        }
+
+        public async Task<IdentityResult> ChangeUserPhonenumber(string userID, string newPhoneNumber)
+        {
+            return await userManager.SetPhoneNumberAsync(userID, newPhoneNumber);
+        }
+
+        public async Task<IdentityResult> ChangeUserEmail(string userID, string newEmail)
+        {
+            return await userManager.SetEmailAsync(userID, newEmail);
+        }
+
         public void Dispose()
         {
             context.Dispose();
