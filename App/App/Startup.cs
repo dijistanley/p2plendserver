@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Owin;
 using System.Web.Http;
+using System.Web.Mvc;
 using System.Web.Routing;
 
 [assembly: OwinStartup(typeof(App.Startup))]
@@ -14,8 +15,11 @@ namespace App
     {
         public void Configuration(IAppBuilder app)
         {
+            AreaRegistration.RegisterAllAreas();
             app.UseCors(CorsOptions.AllowAll);
             GlobalConfiguration.Configure(WebApiConfig.Register);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+
             // uncomment the line below to require authorization for all resources except oauth2/token
             GlobalConfiguration.Configure(FilterConfig.Configure);
             ConfigureJSON(GlobalConfiguration.Configuration);
